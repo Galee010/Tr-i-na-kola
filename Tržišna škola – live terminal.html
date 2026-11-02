@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tržišna škola – live terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0A1017;--pan:#101A25;--pan2:#15212E;--line:#1F2E3F;--ink:#D8E1EA;--mut:#7B8DA0;--up:#22B07D;--dn:#E5484D;--ac:#3B82F6;--font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#E9EEF3;--pan:#FFFFFF;--pan2:#F1F5F9;--line:#D3DCE5;--ink:#14212D;--mut:#5E7082;--up:#0E8F61;--dn:#D13438;--ac:#2563EB;color-scheme:light}}
+:root[data-theme="light"]{--bg:#E9EEF3;--pan:#FFFFFF;--pan2:#F1F5F9;--line:#D3DCE5;--ink:#14212D;--mut:#5E7082;--up:#0E8F61;--dn:#D13438;--ac:#2563EB;color-scheme:light}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font)}
+.mono,.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.dn{color:var(--dn)}.mut{color:var(--mut)}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;padding:10px 16px;background:var(--pan);border-bottom:1px solid var(--line)}
+.brand{font-weight:600;font-size:1.05rem;letter-spacing:-.01em;margin-right:auto;display:flex;align-items:center;gap:10px}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--up);font-weight:500}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--up);animation:pulse 1.4s infinite}
+.paused .live{color:var(--mut)}.paused .live i{background:var(--mut);animation:none}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.live i{animation:none}.track{animation:none!important}}
+.st{display:flex;flex-direction:column}.st small{color:var(--mut);font-size:.72rem}.st b{font:500 1.05rem var(--mono)}
+.tape{overflow:hidden;background:var(--pan2);border-bottom:1px solid var(--line);white-space:nowrap}
+.track{display:inline-block;animation:scroll 50s linear infinite;padding:6px 0}
+@keyframes scroll{to{transform:translateX(-50%)}}
+.track span{margin:0 18px;font:12px var(--mono)}
+.cols{display:grid;gap:12px;padding:12px;max-width:1500px;margin:0 auto;grid-template-columns:1fr}
+@media(min-width:1000px){.cols{grid-template-columns:250px minmax(0,1fr) 310px;align-items:start}}
+.box{background:var(--pan);border:1px solid var(--line);border-radius:6px;margin-bottom:12px;overflow:hidden}
+.box h3{margin:0;padding:9px 12px;font-size:.78rem;font-weight:600;color:var(--mut);border-bottom:1px solid var(--line);background:var(--pan2)}
+.w{display:grid;grid-template-columns:1fr auto;gap:0 8px;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer;border-left:3px solid transparent;align-items:center}
+.w:hover{background:var(--pan2)}.w.on{background:var(--pan2);border-left-color:var(--ac)}
+.w b{font-weight:600}.w small{color:var(--mut);font-size:.72rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.w .r{text-align:right;font:500 .9rem var(--mono)}.w .r small{font-family:var(--mono)}
+.wl{display:grid}
+@media(max-width:999px){.wl{grid-template-columns:1fr 1fr}.w{border-right:1px solid var(--line)}}
+.ch{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;padding:12px 14px 0}
+.ch h2{margin:0;font-size:1.1rem;font-weight:600}.ch .big{font:500 1.7rem var(--mono)}
+svg.cv{display:block;width:100%;height:auto}
+.feed{max-height:430px;overflow:auto}
+.fi{padding:10px 12px;border-bottom:1px solid var(--line)}
+.fi .t{font:12px var(--mono);color:var(--mut);margin-right:8px}
+.fi .h{font-weight:600}.fi p{margin:4px 0 0;color:var(--mut);font-size:.86rem}
+.bar{height:3px;background:var(--line);margin-top:8px;border-radius:2px}.bar i{display:block;height:100%;background:var(--ac);border-radius:2px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.chip{font:11.5px var(--mono);padding:1px 7px;border:1px solid var(--line);border-radius:4px}
+.tabs{display:grid;grid-template-columns:1fr 1fr}
+.tabs button{border:0;border-radius:0;padding:10px;background:var(--pan2);color:var(--mut);font-weight:600}
+.tabs button.on.b{background:var(--up);color:#fff}.tabs button.on.s{background:var(--dn);color:#fff}
+.tk{padding:12px}.tk label{font-size:.75rem;color:var(--mut)}
+.tk input{width:100%;margin:4px 0 8px;padding:9px 10px;background:var(--bg);border:1px solid var(--line);border-radius:5px;color:var(--ink);font:500 1rem var(--mono)}
+.pc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--pan2);color:var(--ink);border-radius:5px;padding:6px}
+button:hover{border-color:var(--ac)}button:focus-visible,input:focus-visible,.w:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.ex{width:100%;padding:11px;font-weight:600;font-size:.95rem;color:#fff;border:0}.ex.b{background:var(--up)}.ex.s{background:var(--dn)}
+.inf{display:flex;justify-content:space-between;font-size:.8rem;color:var(--mut);margin:3px 0}
+.inf span:last-child{font-family:var(--mono);color:var(--ink)}
+#msg{min-height:1.3em;font-size:.82rem;margin-top:8px;color:var(--ac)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+td,th{padding:7px 12px;text-align:right;border-bottom:1px solid var(--line);font-family:var(--mono);font-weight:400}
+th{color:var(--mut);font-family:var(--font);font-size:.72rem}td:first-child,th:first-child{text-align:left;font-family:var(--font);font-weight:600}
+.emp{padding:12px;color:var(--mut);font-size:.85rem}
+footer{padding:4px 16px 28px;color:var(--mut);font-size:.78rem;text-align:center}
+footer button{border:0;background:none;color:var(--mut);text-decoration:underline;padding:0}
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+body{background:radial-gradient(1100px 480px at 12% -8%,color-mix(in srgb,var(--ac) 16%,transparent),transparent),var(--bg)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;backdrop-filter:blur(10px);background:color-mix(in srgb,var(--pan) 86%,transparent);gap:10px 28px}
+.brand{font-size:1.15rem}
+.brand::before{content:'';width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--ac),var(--up))}
+.st{background:var(--pan2);border:1px solid var(--line);border-radius:9px;padding:5px 12px;min-width:112px}
+.st b{font-size:1.1rem}
+button{transition:border-color .15s,background .15s}
+.box{border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.2)}
+.box h3{padding:10px 14px;font-size:.76rem}
+.w{grid-template-columns:1fr 69px auto;gap:0 10px;padding:10px 14px}
+.w .r{min-width:78px;border-radius:5px;padding:2px 5px;animation:fl .7s ease-out}
+@keyframes fl{from{background:color-mix(in srgb,currentColor 18%,transparent)}to{background:transparent}}
+.sk{width:69px;height:18px}.sk.up{color:var(--up)}.sk.dn{color:var(--dn)}
+@media(max-width:999px){.sk{display:none}.w{grid-template-columns:1fr auto}}
+@media(prefers-reduced-motion:reduce){.w .r,.brk b{animation:none}}
+.ch{padding:14px 16px 4px}.ch .big{font-size:2rem}
+.brk{background:linear-gradient(90deg,var(--dn),color-mix(in srgb,var(--dn) 50%,var(--ac)));color:#fff;padding:7px 16px;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brk b{background:#fff;color:var(--dn);border-radius:4px;padding:1px 8px;margin-right:10px;font-size:.72rem;animation:pulse 1.2s infinite}
+.fi{border-left:3px solid transparent}.fi:first-child{border-left-color:var(--ac);background:var(--pan2)}
+.tabs button{padding:12px}
+.pc button{background:var(--bg);padding:7px}
+.ex{border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.25)}.ex:hover{filter:brightness(1.1)}
+.ol,.om{position:relative;display:flex;justify-content:space-between;padding:3px 14px;font:12px var(--mono)}
+.ol span{position:relative}.ol i{position:absolute;right:0;top:1px;bottom:1px;opacity:.16;background:currentColor}
+.om{background:var(--pan2);font-weight:500;font-size:13px;padding:6px 14px;margin:3px 0}
+.al{display:flex;height:9px;margin:12px 14px;border-radius:5px;overflow:hidden;background:var(--line);gap:2px}
+.lg{display:flex;flex-wrap:wrap;gap:4px 12px;padding:0 14px 8px;font-size:.72rem;color:var(--mut)}
+.lg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+tr:hover td{background:var(--pan2)}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="brand">Tržišna škola <span class="live"><i></i><span id="lv">UŽIVO</span></span></div>
+  <div class="st"><small>Vrijeme na burzi</small><b id="clk"></b></div>
+  <div class="st"><small>Gotovina</small><b id="hc"></b></div>
+  <div class="st"><small>Ukupna vrijednost</small><b id="hw"></b></div>
+  <div class="st"><small>Zarada / gubitak</small><b id="hp"></b></div>
+  <button id="pz" data-a="pause">Pauziraj</button><button data-a="speed">Brzina 1x</button>
+</header>
+<div id="brk"></div><div class="tape"><div class="track" id="tape"></div></div>
+<div class="cols">
+  <div><div class="box"><h3>Praćenje tržišta</h3><div class="wl" id="wl"></div></div></div>
+  <div>
+    <div class="box"><div class="ch" id="chh"></div><div id="cv"></div></div>
+    <div class="box"><h3>Vijesti uživo</h3><div class="feed" id="feed"></div></div>
+  </div>
+  <div>
+    <div class="box"><div class="tabs"><button class="b" data-side="buy">Kupi</button><button class="s" data-side="sell">Prodaj</button></div>
+      <div class="tk"><div class="inf"><b id="tn" style="color:var(--ink)"></b><span id="tp"></span></div>
+      <label for="amt">Iznos u eurima</label><input id="amt" type="number" min="0" step="100" value="1000" inputmode="decimal">
+      <div class="pc"><button data-pct="25">25 %</button><button data-pct="50">50 %</button><button data-pct="100">Sve</button></div>
+      <div class="inf"><span>Gotovina</span><span id="tc"></span></div><div class="inf"><span>Tvoja pozicija</span><span id="tq"></span></div>
+      <button class="ex" id="ex" data-a="exec" style="margin-top:10px"></button><div id="msg" role="status"></div></div></div>
+    <div class="box"><h3>Knjiga naloga</h3><div id="ob" style="padding:6px 0"></div></div>
+    <div class="box"><h3>Portfelj</h3><div id="alloc"></div><div id="pos"></div></div>
+    <div class="box"><h3>Povijest naloga</h3><div id="ord"></div></div>
+  </div>
+</div>
+<footer>Edukativna simulacija s lažnim novcem. Vijesti su izmišljene, ali modelirane prema stvarnim događajima. <button data-a="reset">Počni ispočetka</button></footer>
+</div>
+<script>
+const A=[
+ {id:"tech",y:"TECH",n:"Tehnološke dionice",p:100,v:.9},
+ {id:"bank",y:"BANK",n:"Banke",p:50,v:.8},
+ {id:"oil",y:"OIL",n:"Nafta",p:80,v:1},
+ {id:"gold",y:"GOLD",n:"Zlato",p:2000,v:.5},
+ {id:"btc",y:"BTC",n:"Bitcoin",p:30000,v:2.5},
+ {id:"bond",y:"BOND",n:"Državne obveznice",p:100,v:.3}];
+const E=[
+ {h:"Središnja banka podiže kamatne stope",w:"Skuplji krediti usporavaju gospodarstvo, a budući profiti tehnologije vrijede manje. Banke zarađuju veću maržu, a postojeće obveznice gube na cijeni.",e:{tech:-3,bank:2,oil:-.5,gold:-1,btc:-4,bond:-2}},
+ {h:"Središnja banka snižava kamatne stope",w:"Jeftiniji novac potiče rizičnu imovinu poput tehnologije i kriptovaluta. Obveznice s višom kamatom vrijede više, banke gube dio marže.",e:{tech:3.5,bank:-1,oil:.5,gold:1.5,btc:5,bond:2}},
+ {h:"Inflacija veća od očekivane",w:"Rast cijena tjera središnje banke na strože mjere pa dionice i obveznice padaju. Zlato je klasična zaštita od inflacije.",e:{tech:-2.5,bank:-1,oil:1,gold:2.5,btc:-2,bond:-2.5}},
+ {h:"OPEC smanjuje proizvodnju nafte",w:"Manja ponuda uz istu potražnju diže cijenu nafte. Skuplja energija povećava troškove i strah od inflacije.",e:{tech:-1,bank:0,oil:6,gold:1,btc:-.5,bond:-.5}},
+ {h:"Sukob na Bliskom istoku ugrožava opskrbu naftom",w:"Strah od prekida isporuke diže naftu. Novac bježi u zlato i obveznice, a dionice padaju zbog nesigurnosti.",e:{tech:-2.5,bank:-2,oil:5,gold:3,btc:-1,bond:1.5}},
+ {h:"Izvješće o zaposlenosti bolje od očekivanog",w:"Snažno tržište rada znači potrošnju i rast pa dionice i nafta jačaju. No može značiti i više kamate, što pritišće zlato i obveznice.",e:{tech:1,bank:2,oil:1.5,gold:-1.5,btc:1,bond:-1}},
+ {h:"BDP pao, raste strah od recesije",w:"Slabija potražnja pogađa naftu i banke (više neotplaćenih kredita). Investitori traže sigurnost u zlatu i obveznicama.",e:{tech:-3,bank:-4,oil:-4,gold:3,btc:-3,bond:3}},
+ {h:"Tehnološki div objavio rekordnu dobit zahvaljujući AI-ju",w:"Dobri rezultati jedne velike tvrtke podižu cijeli sektor jer investitori očekuju slične dobiti i drugdje.",e:{tech:5,bank:.5,oil:.5,gold:-.5,btc:2,bond:0}},
+ {h:"Propada regionalna banka, povjerenje u bankarski sustav pada",w:"Slično kao u ožujku 2023.: strah od zaraze pogađa druge banke. Ljudi bježe u zlato i obveznice.",e:{tech:-2,bank:-7,oil:-1,gold:3,btc:2,bond:3}},
+ {h:"Odobren kripto fond kojim se trguje na burzi",w:"Lakši pristup običnim i institucionalnim investitorima povećava potražnju za Bitcoinom.",e:{tech:1,bank:0,oil:0,gold:-.5,btc:8,bond:0}},
+ {h:"Velika država zabranjuje trgovanje kriptovalutama",w:"Zabrana smanjuje broj kupaca i izaziva paniku. Ostala imovina gotovo ne reagira.",e:{tech:-.3,bank:0,oil:0,gold:.3,btc:-7,bond:0}},
+ {h:"Novi val pandemije, uvode se ograničenja kretanja",w:"Kao 2020.: promet staje pa nafta pada, banke strahuju od loših kredita. Tehnologija je otpornija jer se radi i kupuje online.",e:{tech:1,bank:-4,oil:-7,gold:2,btc:-2,bond:2.5}},
+ {h:"Potpisan mirovni sporazum, napetosti se smiruju",w:"Manje straha znači manje potrebe za zlatom i manji rizik za opskrbu energijom. Rizičnija imovina jača.",e:{tech:2,bank:1.5,oil:-4,gold:-2.5,btc:1,bond:-.5}},
+ {h:"Nove carine u trgovinskom ratu velikih gospodarstava",w:"Carine poskupljuju uvoz i remete opskrbne lance. Tehnologija najviše pati, a potražnja za naftom slabi.",e:{tech:-3.5,bank:-2,oil:-2,gold:2,btc:-1,bond:1.5}},
+ {h:"Zalihe nafte pale, a zima je hladna",w:"Kad su zalihe male, a potražnja za grijanjem velika, cijena nafte raste.",e:{tech:-.5,bank:0,oil:4,gold:.5,btc:0,bond:-.3}}];
+const KEY="trzisna-skola-live-v1",START=10000,N=40,SPC=6,$=id=>document.getElementById(id),rnd=Math.random,g=()=>(rnd()+rnd()+rnd()-1.5)*2;
+const num=(v,d=2)=>v.toLocaleString("hr-HR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const eur=(v,d=0)=>num(v,d)+" €",sg=v=>(v>=0?"+":"")+num(v,1)+" %",px=(v)=>num(v,v<1000?2:0);
+let s,timer;
+function fresh(){const p={},u={},c={},cost={};A.forEach(a=>{p[a.id]=a.p;u[a.id]=0;cost[a.id]=0;c[a.id]=[{o:a.p,h:a.p,l:a.p,c:a.p}]});
+ return{cash:START,p,u,cost,c,open:{...p},sel:"tech",side:"buy",t:0,feed:[],ord:[],ev:null,left:0,gap:4,last:-1,paused:false}}
+function load(){try{const r=localStorage.getItem(KEY);if(r)return JSON.parse(r)}catch(e){}return null}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+const worth=()=>s.cash+A.reduce((t,a)=>t+s.u[a.id]*s.p[a.id],0);
+const clock=()=>{const m=570+s.t%390;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")};
+function tick(){
+ if(s.paused)return;
+ s.t++;
+ if(!s.ev&&--s.gap<=0){let i;do{i=Math.floor(rnd()*E.length)}while(i===s.last);s.last=i;
+  s.ev={i,k:{},st:{...s.p}};A.forEach(a=>s.ev.k[a.id]=.6+rnd()*.8);s.left=N;s.feed.unshift({t:clock(),i,done:false});s.feed=s.feed.slice(0,12)}
+ A.forEach(a=>{let r=g()*a.v*.14;if(s.ev)r+=E[s.ev.i].e[a.id]*s.ev.k[a.id]/N;
+  const p=s.p[a.id],n=p*(1+r/100);s.d[a.id]=n>=p;s.p[a.id]=n;
+  const cs=s.c[a.id],k=cs[cs.length-1];k.c=n;k.h=Math.max(k.h,n);k.l=Math.min(k.l,n);
+  if(s.t%SPC===0){cs.push({o:n,h:n,l:n,c:n});if(cs.length>90)cs.shift()}});
+ if(s.ev&&--s.left<=0){const f=s.feed[0],ch={};A.forEach(a=>ch[a.id]=(s.p[a.id]/s.ev.st[a.id]-1)*100);f.done=true;f.ch=ch;s.ev=null;s.gap=14+Math.floor(rnd()*14)}
+ paint()}
+function spark(id){const a=s.c[id].slice(-24).map(k=>k.c);if(a.length<2)return"";const mn=Math.min(...a),r=Math.max(...a)-mn||1;
+ return a.map((v,i)=>(i*3).toFixed(0)+","+(16-(v-mn)/r*14).toFixed(1)).join(" ")}
+function chart(){const id=s.sel,cs=s.c[id].slice(-60),W=720,H=330,R=70,B=8,cw=(W-R)/60;
+ let mn=Math.min(...cs.map(k=>k.l)),mx=Math.max(...cs.map(k=>k.h));const pad=(mx-mn)*.12||mx*.002;mn-=pad;mx+=pad;
+ const y=v=>B+(H-2*B-52)*(1-(v-mn)/(mx-mn)),d=s.p[id]<1000?2:0;let o="";
+ for(let i=0;i<5;i++){const v=mn+(mx-mn)*i/4;o+=`<line x1="0" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${W-R+8}" y="${y(v)+4}" fill="var(--mut)" font-size="11" font-family="IBM Plex Mono,monospace">${num(v,d)}</text>`}
+ const mv=Math.max(...cs.map(k=>(k.h-k.l)/k.o))||1;cs.forEach((k,i)=>{const x=i*cw+cw/2,up=k.c>=k.o,col=up?"var(--up)":"var(--dn)",vh=Math.max(1.5,(k.h-k.l)/k.o/mv*44);o+=`<rect x="${x-cw*.33}" y="${H-B-vh}" width="${cw*.66}" height="${vh}" fill="${col}" opacity=".3"/>`;
+  o+=`<line x1="${x}" x2="${x}" y1="${y(k.h)}" y2="${y(k.l)}" stroke="${col}"/><rect x="${x-cw*.33}" y="${Math.min(y(k.o),y(k.c))}" width="${cw*.66}" height="${Math.max(1.5,Math.abs(y(k.o)-y(k.c)))}" fill="${col}"/>`});
+ const p=s.p[id],c=s.d[id]?"var(--up)":"var(--dn)";
+ o+=`<line x1="0" x2="${W-R}" y1="${y(p)}" y2="${y(p)}" stroke="${c}" stroke-dasharray="4 3"/><rect x="${W-R}" y="${y(p)-10}" width="${R}" height="20" fill="${c}"/><text x="${W-R+8}" y="${y(p)+4}" fill="#fff" font-size="11.5" font-weight="500" font-family="IBM Plex Mono,monospace">${num(p,d)}</text>`;
+ return `<svg class="cv" viewBox="0 0 ${W} ${H}" role="img" aria-label="Svjećasti graf">${o}</svg>`}
+function paint(){
+ const w=worth(),pl=w-START;
+ $("clk").textContent="Dan "+(1+Math.floor(s.t/390))+", "+clock();
+ $("hc").textContent=eur(s.cash);$("hw").textContent=eur(w);
+ $("hp").textContent=(pl>=0?"+":"")+eur(pl);$("hp").className=pl>=0?"up":"dn";
+ const tp=A.map(a=>{const c=(s.p[a.id]/s.open[a.id]-1)*100;return `<span>${a.y} <b class="${s.d[a.id]?"up":"dn"}">${px(s.p[a.id])}</b> <i class="${c>=0?"up":"dn"}" style="font-style:normal">${sg(c)}</i></span>`}).join("");
+ $("tape").innerHTML=tp+tp;
+ $("wl").innerHTML=A.map(a=>{const c=(s.p[a.id]/s.open[a.id]-1)*100,up=s.d[a.id];
+  return `<div class="w ${a.id===s.sel?"on":""}" data-sel="${a.id}" tabindex="0"><div><b>${a.y}</b><small>${a.n}</small></div>
+  <svg class="sk ${c>=0?"up":"dn"}" viewBox="0 0 69 18"><polyline points="${spark(a.id)}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><div class="r ${up?"up":"dn"}">${px(s.p[a.id])}<small class="${c>=0?"up":"dn"}">${sg(c)}</small></div></div>`}).join("");
+ const a=A.find(x=>x.id===s.sel),p=s.p[a.id],c=(p/s.open[a.id]-1)*100;
+ $("chh").innerHTML=`<h2>${a.n} <span class="mut mono" style="font-size:.8rem">${a.y}</span></h2><span class="big ${s.d[a.id]?"up":"dn"}">${px(p)}</span><span class="mono ${c>=0?"up":"dn"}">${sg(c)} od početka</span>`;
+ $("cv").innerHTML=chart();
+ $("tp").textContent=px(p)+" €";$("tc").textContent=eur(s.cash,2);$("tq").textContent=eur(s.u[a.id]*p,2);
+ $("feed").innerHTML=s.feed.length?s.feed.map(f=>{const e=E[f.i];return `<div class="fi"><span class="t">${f.t}</span><span class="h">${e.h}</span>`+
+  (f.done?`<p>${e.w}</p><div class="chips">${A.map(a=>`<span class="chip ${f.ch[a.id]>=0?"up":"dn"}">${a.y} ${sg(f.ch[a.id])}</span>`).join("")}</div>`:
+  `<p>Tržište reagira. Što misliš, što će se dogoditi s cijenama?</p><div class="bar"><i style="width:${(N-s.left)/N*100}%"></i></div>`)+`</div>`}).join(""):`<div class="emp">Čekamo prvu vijest…</div>`;
+ $("brk").innerHTML=s.ev?`<div class="brk"><b>VAŽNO</b>${E[s.ev.i].h}</div>`:"";
+ const spr=p*.0006;let ob="";
+ for(let i=4;i>=0;i--){const q=20+Math.floor(rnd()*180);ob+=`<div class="ol dn"><span>${px(p+spr*(i+1))}</span><span>${q}</span><i style="width:${q/2}%"></i></div>`}
+ ob+=`<div class="om"><span>${px(p)} €</span><span class="mut">Razlika ${px(spr*2)}</span></div>`;
+ for(let i=0;i<5;i++){const q=20+Math.floor(rnd()*180);ob+=`<div class="ol up"><span>${px(p-spr*(i+1))}</span><span>${q}</span><i style="width:${q/2}%"></i></div>`}
+ $("ob").innerHTML=ob;
+ const cl=["#3B82F6","#A78BFA","#F59E0B","#EAB308","#F97316","#14B8A6"],parts=[{n:"Gotovina",v:s.cash,c:"var(--mut)"},...A.map((x,i)=>({n:x.y,v:s.u[x.id]*s.p[x.id],c:cl[i]}))].filter(x=>x.v>.01);
+ $("alloc").innerHTML=`<div class="al">${parts.map(x=>`<div style="width:${x.v/w*100}%;background:${x.c}"></div>`).join("")}</div><div class="lg">${parts.map(x=>`<span><i style="background:${x.c}"></i>${x.n} ${num(x.v/w*100,0)} %</span>`).join("")}</div>`;
+ const op=A.filter(a=>s.u[a.id]*s.p[a.id]>.01);
+ $("pos").innerHTML=op.length?`<table><tr><th>Imovina</th><th>Vrijednost</th><th>Zarada</th></tr>`+op.map(a=>{const v=s.u[a.id]*s.p[a.id],l=v-s.cost[a.id];
+  return `<tr><td>${a.y}</td><td>${eur(v)}</td><td class="${l>=0?"up":"dn"}">${(l>=0?"+":"")+eur(l)}</td></tr>`}).join("")+`</table>`:`<div class="emp">Nemaš otvorenih pozicija.</div>`;
+ $("ord").innerHTML=s.ord.length?`<table>`+s.ord.slice(0,6).map(o=>`<tr><td class="${o.side==="buy"?"up":"dn"}">${o.side==="buy"?"Kupnja":"Prodaja"} ${o.y}</td><td>${eur(o.amt)}</td><td>${o.t}</td></tr>`).join("")+`</table>`:`<div class="emp">Još nema naloga.</div>`;
+ document.body.classList.toggle("paused",s.paused);$("pz").textContent=s.paused?"Nastavi":"Pauziraj";$("lv").textContent=s.paused?"PAUZA":"UŽIVO"}
+function ticket(){const a=A.find(x=>x.id===s.sel);$("tn").textContent=a.n;
+ document.querySelectorAll("[data-side]").forEach(b=>b.classList.toggle("on",b.dataset.side===s.side));
+ const ex=$("ex");ex.className="ex "+(s.side==="buy"?"b":"s");ex.textContent=(s.side==="buy"?"Kupi ":"Prodaj ")+a.y}
+function msg(t){$("msg").textContent=t;clearTimeout(msg.h);msg.h=setTimeout(()=>$("msg").textContent="",3500)}
+function exec(){const a=A.find(x=>x.id===s.sel),p=s.p[a.id];let amt=+$("amt").value;if(!(amt>0))return msg("Upiši iznos veći od nule.");
+ if(s.side==="buy"){if(s.cash<.01)return msg("Nemaš gotovine.");amt=Math.min(amt,s.cash);s.u[a.id]+=amt/p;s.cash-=amt;s.cost[a.id]+=amt}
+ else{const have=s.u[a.id]*p;if(have<.01)return msg("Nemaš ovu imovinu.");amt=Math.min(amt,have);const f=amt/have;s.u[a.id]*=1-f;s.cost[a.id]*=1-f;s.cash+=amt}
+ s.ord.unshift({side:s.side,y:a.y,amt,t:clock()});msg((s.side==="buy"?"Kupljeno ":"Prodano ")+a.y+" za "+eur(amt,2)+" po cijeni "+px(p)+" €.");paint()}
+document.addEventListener("click",e=>{const t=e.target.closest("button,[data-sel]");if(!t)return;const d=t.dataset;
+ if(d.sel){s.sel=d.sel;ticket();paint()}
+ else if(d.side){s.side=d.side;ticket();paint()}
+ else if(d.pct){const a=A.find(x=>x.id===s.sel),b=s.side==="buy"?s.cash:s.u[a.id]*s.p[a.id];$("amt").value=Math.floor(b*d.pct/100*100)/100}
+ else if(d.a==="exec")exec();
+ else if(d.a==="pause"){s.paused=!s.paused;paint()}
+ else if(d.a==="speed"){window.sp=window.sp===4?1:(window.sp||1)*2;t.textContent="Brzina "+window.sp+"x"}
+ else if(d.a==="reset"&&confirm("Počni ispočetka s "+eur(START)+"?")){s=fresh();s.d={};ticket();paint()}});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset.sel){s.sel=e.target.dataset.sel;ticket();paint()}});
+s=load()||fresh();s.d={};A.forEach(a=>s.d[a.id]=true);ticket();paint();
+(function loop(){tick();setTimeout(loop,800/(window.sp||1))})();setInterval(save,5000);
+</script>
+</body>
+</html>
